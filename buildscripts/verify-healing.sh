@@ -4,30 +4,53 @@
 set -E
 set -o pipefail
 
+# #mabing: 这里是检测当前目录有这个文件并有执行权限, 如果要检测系统有没有安装minio: "if ! command -v minio &>/dev/null; then"
 if [ ! -x "$PWD/minio" ]; then
 	echo "minio executable binary not found in current directory"
 	exit 1
 fi
 
+# mabing: $RANDOM 是 Bash shell 的内置变量。
 WORK_DIR="$PWD/.verify-$RANDOM"
 MINIO_CONFIG_DIR="$WORK_DIR/.minio"
 MINIO=("$PWD/minio" --config-dir "$MINIO_CONFIG_DIR" server)
+# mabing: 为什么还需要GOPATH
 GOPATH=/tmp/gopath
 
+# mabing: 下面的命令要执行3次, 每次把--address后面的端口号加1
+# minio --config-dir /root/daocloud/minio/minio/mine/.verify-9970/.minio server \
+# --address :12323 \
+# http://127.0.0.1:12323/root/daocloud/minio/minio/mine/.verify-9970/1/1/ \
+# http://127.0.0.1:12324/root/daocloud/minio/minio/mine/.verify-9970/2/1/ \
+# http://127.0.0.1:12325/root/daocloud/minio/minio/mine/.verify-9970/3/1/ \
+# http://127.0.0.1:12323/root/daocloud/minio/minio/mine/.verify-9970/1/2/ \
+# http://127.0.0.1:12324/root/daocloud/minio/minio/mine/.verify-9970/2/2/ \
+# http://127.0.0.1:12325/root/daocloud/minio/minio/mine/.verify-9970/3/2/ \
+# http://127.0.0.1:12323/root/daocloud/minio/minio/mine/.verify-9970/1/4/ \
+# http://127.0.0.1:12324/root/daocloud/minio/minio/mine/.verify-9970/2/4/ \
+# http://127.0.0.1:12325/root/daocloud/minio/minio/mine/.verify-9970/3/4/ \
+# http://127.0.0.1:12323/root/daocloud/minio/minio/mine/.verify-9970/1/5/ \
+# http://127.0.0.1:12324/root/daocloud/minio/minio/mine/.verify-9970/2/5/ \
+# http://127.0.0.1:12325/root/daocloud/minio/minio/mine/.verify-9970/3/5/
 function start_minio_3_node() {
+  # mabing: 输出 1 2 3
 	for i in $(seq 1 3); do
 		rm "${WORK_DIR}/dist-minio-server$i.log"
 	done
 
 	export MINIO_ROOT_USER=minio
 	export MINIO_ROOT_PASSWORD=minio123
+	# mabing: 这个环境变量可以手动指定? https://github.com/minio/minio/discussions/20311
 	export MINIO_ERASURE_SET_DRIVE_COUNT=6
+	# mabing: 在这个脚本里这个环境变量是不可少的,否则会报错:`drive is part of root drive`, 在代码中有对其硬编码,等号右边可以随便写些啥,只要不为""就行.
 	export MINIO_CI_CD=1
 
 	first_time=$(find ${WORK_DIR}/ | grep format.json | wc -l)
 
 	start_port=$1
 	args=""
+  # mabing: seq [OPTION]... FIRST INCREMENT LAST, seq 1 3 5,输出 1 4, 导致目录为1,2,4,5没有3...
+  # 整体的配置就是3台机器,每台机器的目录为1,2,4,5.
 	for d in $(seq 1 3 5); do
 		args="$args http://127.0.0.1:$((start_port + 1))${WORK_DIR}/1/${d}/ http://127.0.0.1:$((start_port + 2))${WORK_DIR}/2/${d}/ http://127.0.0.1:$((start_port + 3))${WORK_DIR}/3/${d}/ "
 		d=$((d + 1))
@@ -35,7 +58,9 @@ function start_minio_3_node() {
 	done
 
 	"${MINIO[@]}" --address ":$((start_port + 1))" $args >"${WORK_DIR}/dist-minio-server1.log" 2>&1 &
+	# mabing: 在 Bash 中，$! 是一个特殊变量，保存最近一个在后台运行的进程的 PID
 	pid1=$!
+	# mabing: "help disown" 查看文档, Remove jobs from current shell
 	disown ${pid1}
 
 	"${MINIO[@]}" --address ":$((start_port + 2))" $args >"${WORK_DIR}/dist-minio-server2.log" 2>&1 &
@@ -46,7 +71,11 @@ function start_minio_3_node() {
 	pid3=$!
 	disown $pid3
 
+	# mabing: 在 MinIO 中，MC_HOST_ 前缀的环境变量用于配置 MinIO 客户端 (mc) 的别名 (alias)。
+	# 这个应该是在mc的代码里实现的逻辑: https://github.com/usernameisnull/mc/blob/5bb5df85e222e84505c4f30490bcb43739cee74d/cmd/config.go#L269
+	# 在后面的mc操作中就可以使用这个别名, 比如MC_HOST_myminio, 后面就使用myminio这个别名
 	export MC_HOST_myminio="http://minio:minio123@127.0.0.1:$((start_port + 1))"
+	# mabing: 如果命令在 15 分钟内没有完成，timeout 会终止该命令, 如果前面的命令执行失败（返回非零退出码），则执行 fail 函数
 	timeout 15m /tmp/mc ready myminio || fail
 
 	[ ${first_time} -eq 0 ] && upload_objects
@@ -63,7 +92,7 @@ function start_minio_3_node() {
 	if ! ps -p $pid3 1>&2 >/dev/null; then
 		echo "minio server 3 is not running" && fail
 	fi
-
+  # mabing: 为什么这里要停掉进程?
 	if ! pkill minio; then
 		fail
 	fi
@@ -152,8 +181,10 @@ function perform_test() {
 	fi
 }
 
+# mabing: 启动集群, 上传文件, 然后删除对应节点的目录, 然后启动集群, 检查是否恢复成功
 function main() {
 	# use same ports for all tests
+	# mabing: 随机选择一个端口号
 	start_port=$(shuf -i 10000-65000 -n 1)
 
 	perform_test "2" ${start_port}

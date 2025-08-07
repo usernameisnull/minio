@@ -4,15 +4,46 @@
 set -E
 set -o pipefail
 
-if [ ! -x "$PWD/minio" ]; then
-	echo "minio executable binary not found in current directory"
-	exit 1
+function check_command() {
+    local cmd="$1"
+    if [[ -z "$cmd" ]]; then
+        echo "错误：未提供要检测的命令名称" >&2
+        return 3
+    fi
+
+    # 检测命令是否存在
+    local cmd_path
+    if ! cmd_path=$(command -v "$cmd" 2>/dev/null); then
+        echo "命令未找到: $cmd" >&2
+        return 2
+    fi
+
+    # 检测执行权限
+    if [[ ! -x "$cmd_path" ]]; then
+        echo "命令存在但不可执行: $cmd" >&2
+        echo "文件路径: $cmd_path" >&2
+        return 1
+    fi
+
+    # 所有检测通过
+    echo "✓ 命令可用: $cmd (位置: $cmd_path)"
+    return 0
+}
+
+if ! check_command minio ; then
+    echo "minio 命令未安装"
+    exit 1
+fi
+
+if ! check_command mc ; then
+    echo "mc 命令未安装"
+    exit 1
 fi
 
 # mabing: $RANDOM 是 Bash shell 的内置变量。
 WORK_DIR="$PWD/.verify-$RANDOM"
 MINIO_CONFIG_DIR="$WORK_DIR/.minio"
-MINIO=("$PWD/minio" --config-dir "$MINIO_CONFIG_DIR" server)
+MINIO=("minio" --config-dir "$MINIO_CONFIG_DIR" server)
 GOPATH=/tmp/gopath
 
 function start_minio_3_node() {
@@ -53,7 +84,7 @@ function start_minio_3_node() {
 	# mabing: 在 MinIO 中，MC_HOST_ 前缀的环境变量用于配置 MinIO 客户端 (mc) 的别名 (alias)。这个应该是在mc的代码里实现的逻辑: https://github.com/usernameisnull/mc/blob/5bb5df85e222e84505c4f30490bcb43739cee74d/cmd/config.go#L269
 	export MC_HOST_myminio="http://minio:minio123@127.0.0.1:$((start_port + 1))"
 	# mabing: 如果命令在 15 分钟内没有完成，timeout 会终止该命令, 如果前面的命令执行失败（返回非零退出码），则执行 fail 函数
-	timeout 15m /tmp/mc ready myminio || fail
+	timeout 15m mc ready myminio || fail
 
 	[ ${first_time} -eq 0 ] && upload_objects
 	[ ${first_time} -ne 0 ] && sleep 120
@@ -124,17 +155,12 @@ function __init__() {
 
 	## version is purposefully set to '3' for minio to migrate configuration file
 	echo '{"version": "3", "credential": {"accessKey": "minio", "secretKey": "minio123"}, "region": "us-east-1"}' >"$MINIO_CONFIG_DIR/config.json"
-
-	if [ ! -f /tmp/mc ]; then
-		wget --quiet -O /tmp/mc https://dl.minio.io/client/mc/release/linux-amd64/mc &&
-			chmod +x /tmp/mc
-	fi
 }
 
 function upload_objects() {
-	/tmp/mc mb myminio/testbucket/
+	mc mb myminio/testbucket/
 	for ((i = 0; i < 20; i++)); do
-		echo "my content" | /tmp/mc pipe myminio/testbucket/file-$i
+		echo "my content" | mc pipe myminio/testbucket/file-$i
 	done
 }
 

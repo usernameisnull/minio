@@ -277,6 +277,7 @@ func parseEndpointSet(setDriveCount uint64, args ...string) (ep endpointSet, err
 // specific set size.
 // For example: {1...64} is divided into 4 sets each of size 16.
 // This applies to even distributed setup syntax as well.
+// mabing: http://minio-0{1...2}/mnt/minio/data-1 -> http://minio-01/mnt/minio/data-1, http://minio-02/mnt/minio/data-1
 func GetAllSets(setDriveCount uint64, args ...string) ([][]string, error) {
 	var setArgs [][]string
 	if !ellipses.HasEllipses(args...) {
