@@ -25,6 +25,18 @@ import (
 )
 
 // SameDisk reports whether di1 and di2 describe the same disk.
+// mabing: 获取的是 传入路径 所在文件系统的设备 ID，可以用它判断两个路径是不是在同一个挂载点上（同一个设备)
+// disk1=/root/daocloud/minio/minio/mine/.verify-9970/1/1, disk2=/
+// lsblk的等同命令
+// lsblk -o MAJ:MIN,NAME -n
+// 这里的st1.Dev需要如下处理能获得上面的lsblk的等同输出
+// major := (st.Dev >> 8) & 0xfff
+// minor := (st.Dev & 0xff) | ((st.Dev >> 12) & 0xfff00)
+//
+//8:0   sda
+//8:16  sdb
+//8:32  sdc
+//8:48  sdd
 func SameDisk(disk1, disk2 string) (bool, error) {
 	st1 := syscall.Stat_t{}
 	st2 := syscall.Stat_t{}

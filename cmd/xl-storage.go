@@ -251,7 +251,7 @@ func newXLStorage(ep Endpoint, cleanUp bool) (s *xlStorage, err error) {
 	s.major = info.Major
 	s.minor = info.Minor
 	s.fsType = info.FSType
-
+	// mabing: 没有设置MINIO_CI_CD环境变量, 报错的地方
 	if rootDrive {
 		return s, errDriveIsRoot
 	}

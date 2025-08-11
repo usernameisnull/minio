@@ -1239,6 +1239,7 @@ func logFatalErrs(err error, endpoint Endpoint, exit bool) {
 		}
 	default:
 		if !exit {
+			// mabing: 没有设置MINIO_CI_CD环境变量, 报错的地方
 			storageLogOnceIf(GlobalContext, fmt.Errorf("Drive %s returned an unexpected error: %w, please investigate - drive will be offline", endpoint, err), "log-fatal-errs")
 		} else {
 			logger.Fatal(err, "Unable to initialize backend")
@@ -1397,6 +1398,7 @@ func registerStorageRESTHandlers(router *mux.Router, endpointServerPools Endpoin
 			}), "unable to register handler")
 
 			createStorage := func(endpoint Endpoint) bool {
+				// mabing: 没有设置MINIO_CI_CD环境变量, 报错的地方
 				xl, err := newXLStorage(endpoint, false)
 				if err != nil {
 					// if supported errors don't fail, we proceed to
