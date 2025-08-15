@@ -69,6 +69,9 @@ func initGlobalGrid(ctx context.Context, eps EndpointServerPools) error {
 	if err != nil {
 		return err
 	}
+	// mabing: 原子地（线程安全地）将 g（类型 *grid.Manager）这个指针存入 globalGrid 保证即使有多个 goroutine 同时读取或
+	// 写入 globalGrid，不会出现数据竞争（data race）
+	// 后续代码可以通过 globalGrid.Load() 无锁地读到这个指针，并使用里面的 grid.Manager 实例
 	globalGrid.Store(g)
 	return nil
 }
