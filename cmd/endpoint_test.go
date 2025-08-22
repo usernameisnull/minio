@@ -140,6 +140,7 @@ func TestCreateEndpoints(t *testing.T) {
 	nonLoopBackIPs := localIP4.FuncMatch(func(ip string, matchString string) bool {
 		return !net.ParseIP(ip).IsLoopback()
 	}, "")
+	// mabing: 必须保证运行这段代码的机器能拿到ip
 	if len(nonLoopBackIPs) == 0 {
 		t.Fatalf("No non-loop back IP address found for this host")
 	}

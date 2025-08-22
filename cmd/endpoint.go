@@ -1137,7 +1137,9 @@ func CreatePoolEndpoints(serverAddr string, poolsLayout ...poolDisksLayout) ([]E
 	}
 
 	erasureType := len(uniqueArgs.ToSlice()) == 1
-
+	// mabing: 这里返回ErasureSetupType的条件,在endpoint_test.go的TestCreateEndpoints里提到了2种, 这里的endpoints都是和磁盘相关的
+	// 1. 是就是路径格式, 就是Host为空
+	// 2. 虽然是URL路径格式,但是URL都是一样的(主机和端口都是一样的)
 	for _, endpoints := range poolEndpoints {
 		// Return Erasure setup when all endpoints are path style.
 		if endpoints[0].Type() == PathEndpointType {
