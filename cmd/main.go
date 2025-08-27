@@ -103,6 +103,7 @@ func newApp(name string) *cli.App {
 	commands := []cli.Command{}
 
 	// Collection of minio commands currently supported in a trie tree.
+	// mabing: trie是字典树
 	commandsTree := trie.NewTrie()
 
 	// registerCommand registers a cli command.

@@ -21,5 +21,6 @@ import "os"
 
 func init() {
 	// All MinIO operations must be under UTC.
+	// mabing: 临时设置（当前会话有效）
 	os.Setenv("TZ", "UTC")
 }
