@@ -29,6 +29,7 @@ import (
 )
 
 // globalGrid is the global grid manager.
+// mabing: globalLockGrid和globalGrid这里都是用到了泛型, 中括号里是类型, 只是为了多协程场景下的安全读写, 整个项目就用到Store和Load2个方法
 var globalGrid atomic.Pointer[grid.Manager]
 
 // globalLockGrid is the global lock grid manager.
@@ -83,6 +84,7 @@ func initGlobalLockGrid(ctx context.Context, eps EndpointServerPools) error {
 		// Pass Dialer for websocket grid, make sure we do not
 		// provide any DriveOPTimeout() function, as that is not
 		// useful over persistent connections.
+		// mabing: 与initGlobalGrid的区别之一, grid.ConnectWS
 		Dialer: grid.ConnectWSWithRoutePath(
 			grid.ContextDialer(xhttp.DialContextWithLookupHost(lookupHost, xhttp.NewInternodeDialContext(rest.DefaultTimeout, globalTCPOptions.ForWebsocket()))),
 			newCachedAuthToken(),
@@ -97,9 +99,10 @@ func initGlobalLockGrid(ctx context.Context, eps EndpointServerPools) error {
 		AuthFn:       newCachedAuthToken(),
 		BlockConnect: globalGridStart,
 		// Record incoming and outgoing bytes.
-		Incoming:  globalConnStats.incInternodeInputBytes,
-		Outgoing:  globalConnStats.incInternodeOutputBytes,
-		TraceTo:   globalTrace,
+		Incoming: globalConnStats.incInternodeInputBytes,
+		Outgoing: globalConnStats.incInternodeOutputBytes,
+		TraceTo:  globalTrace,
+		// mabing: 与initGlobalGrid的区别之二,grid.RoutePath
 		RoutePath: grid.RouteLockPath,
 	})
 	if err != nil {
