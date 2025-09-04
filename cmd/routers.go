@@ -84,6 +84,10 @@ var globalMiddlewares = []mux.MiddlewareFunc{
 func configureServerHandler(endpointServerPools EndpointServerPools) (http.Handler, error) {
 	// Initialize router. `SkipClean(true)` stops minio/mux from
 	// normalizing URL path minio/minio#3256
+	// mabing: .SkipClean(true): 跳过路径清理功能。
+	// 通常路由器会自动清理 URL 路径（比如将 // 转换为 /，移除 . 和 .. 等），但设置为 true 后会保持原始路径不变。
+	// mabing: .UseEncodedPath(): 使用编码后的路径进行路由匹配。这意味着路由器会使用 URL 编码后的原始路径进行匹配，
+	// 而不是解码后的路径。这确保了包含特殊字符（如空格、中文字符等）的对象名称能够正确处理。
 	router := mux.NewRouter().SkipClean(true).UseEncodedPath()
 
 	// Initialize distributed NS lock.
