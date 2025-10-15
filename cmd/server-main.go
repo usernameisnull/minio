@@ -880,6 +880,7 @@ func serverMain(ctx *cli.Context) {
 
 	// Initialize grid
 	bootstrapTrace("initGrid", func() {
+		// mabing: initGlobalGrid做了什么, 为什么还要有一个initGlobalLockGrid
 		logger.FatalIf(initGlobalGrid(GlobalContext, globalEndpoints), "Unable to configure server grid RPC services")
 	})
 

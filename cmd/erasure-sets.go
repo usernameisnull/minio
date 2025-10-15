@@ -1004,6 +1004,7 @@ func formatsToDrivesInfo(endpoints Endpoints, formats []*formatErasureV3, sErrs 
 }
 
 // HealFormat - heals missing `format.json` on fresh unformatted disks.
+// mabing: 启动的时候, 创建format.json?
 func (s *erasureSets) HealFormat(ctx context.Context, dryRun bool) (res madmin.HealResultItem, err error) {
 	storageDisks, _ := initStorageDisksWithErrors(s.endpoints.Endpoints, storageOpts{
 		cleanUp:     false,

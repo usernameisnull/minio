@@ -175,7 +175,7 @@ type serverCtxt struct {
 var (
 	// Global user opts context
 	globalServerCtxt serverCtxt
-
+	// mabing: ??
 	// Indicates if the running minio server is distributed setup.
 	globalIsDistErasure = false
 
@@ -189,6 +189,7 @@ var (
 	globalIsTesting = false
 
 	// This flag is set to 'true' by default
+	// mabing: 是否允许浏览器访问
 	globalBrowserEnabled = true
 
 	// Custom browser redirect URL, not set by default
