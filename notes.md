@@ -23,3 +23,6 @@ cmd/format-erasure.go:93,
 - 结构体: type formatErasureV2 struct {} 
 - 函数: func newFormatErasureV3(numSets int, setLen int) *formatErasureV3 {}
 - initFormatErasure把format.json写入磁盘?
+
+## minio的github仓库变成source only了
+不再提供镜像了: https://github.com/minio/minio/issues/21647
