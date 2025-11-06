@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -ex
 
 function _init() {
 	## All binaries are static make sure to disable CGO.
@@ -8,7 +8,7 @@ function _init() {
 	export CRED_DIR="/media/${USER}/minio"
 
 	## List of architectures and OS to test coss compilation.
-	SUPPORTED_OSARCH="linux/amd64 linux/arm64"
+	SUPPORTED_OSARCH="linux/ppc64le linux/amd64 linux/arm64"
 
 	remote=$(git remote get-url upstream)
 	if test "$remote" != "git@github.com:minio/minio.git"; then
@@ -56,9 +56,9 @@ function main() {
 
 	docker buildx build --push --no-cache \
 		--build-arg RELEASE="${release}" \
-		-t "release-ci.daocloud.io/demo/minio:latest" \
-		-t "release-ci.daocloud.io/demo/minio:${release}" \
-		--platform=linux/arm64,linux/amd64 \
+		-t "registry.min.dev/community/minio:latest" \
+		-t "registry.min.dev/community/minio:${release}" \
+		--platform=linux/arm64,linux/amd64,linux/ppc64le \
 		-f Dockerfile .
 
 	docker buildx prune -f
