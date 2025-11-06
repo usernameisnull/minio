@@ -53,4 +53,16 @@ grep kqueue . -R|grep build
 ### 如何本地打镜像
 - docker-buildx.sh
 - Dockerfile.release
-## dashboard里的admin部分
+
+## console
+UI所在的仓库: https://github.com/minio/object-browser
+
+### 移除UI里的管理员功能
+https://github.com/minio/object-browser/pull/3509
+
+### 集成到minio的源里
+因为这个仓库有go代码, minio的仓库直接在go.mod里引用了这个仓库
+https://github.com/usernameisnull/minio/blob/d45c375dabea34b1b2734a79880e1e02f41183eb/go.mod#L54
+```txt
+github.com/minio/console v1.7.7-0.20250905210349-2017f33b26e1
+```
