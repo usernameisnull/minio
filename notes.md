@@ -26,3 +26,31 @@ cmd/format-erasure.go:93,
 
 ## minio的github仓库变成source only了
 不再提供镜像了: https://github.com/minio/minio/issues/21647
+替代的下载: https://github.com/CloudPirates-io/helm-charts/issues/441
+## 镜像打包
+docker-buildx.sh里有这么一句: `go build -tags kqueue -trimpath`, go help build的输出如下: 
+```txt
+-tags tag,list
+    a comma-separated list of additional build tags to consider satisfied
+    during the build. For more information about build tags, see
+    'go help buildconstraint'. (Earlier versions of Go used a
+    space-separated list, and that form is deprecated but still recognized.)
+-trimpath
+    remove all file system paths from the resulting executable.
+    Instead of absolute file system paths, the recorded file names
+    will begin either a module path@version (when using modules),
+    or a plain import path (when using the standard library, or GOPATH).
+```
+### kqueue
+这个kqueue的tag在minio的源码里没有, 但是在依赖里有:  
+```bash
+go mod tidy && go mod vendor
+grep kqueue . -R|grep build
+```
+### trimpath
+会把 Go [编译时的本地绝对路径去掉]()，改成模块路径（或导入路径），以避免暴露构建环境并提升构建可重现性。
+
+### 如何本地打镜像
+- docker-buildx.sh
+- Dockerfile.release
+## dashboard里的admin部分
