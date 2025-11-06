@@ -1,0 +1,24 @@
+FROM golang:1.24-alpine AS build
+
+ARG TARGETARCH
+ARG RELEASE
+
+ENV GOPATH=/go
+ENV CGO_ENABLED=0
+
+WORKDIR /build
+
+RUN sed -i 's|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.tuna.tsinghua.edu.cn/alpine|g' /etc/apk/repositories \
+    && apk update \
+    && apk add --no-cache git openssh ca-certificates \
+    && update-ca-certificates \
+    && apk add -U --no-cache ca-certificates \
+    && apk add -U --no-cache curl \
+    && apk add -U --no-cache bash
+
+# 可选：设置 Go 模块代理为中国镜像（加快 go mod 下载速度）
+ENV GOPROXY=https://goproxy.cn,direct
+
+COPY docker-build-mc.sh .
+RUN chmod +x docker-build-mc.sh \
+    && ./docker-build-mc.sh ${TARGETARCH} ${RELEASE}

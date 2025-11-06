@@ -27,6 +27,7 @@ cmd/format-erasure.go:93,
 ## minio的github仓库变成source only了
 不再提供镜像了: https://github.com/minio/minio/issues/21647
 替代的下载: https://github.com/CloudPirates-io/helm-charts/issues/441
+
 ## 镜像打包
 docker-buildx.sh里有这么一句: `go build -tags kqueue -trimpath`, go help build的输出如下: 
 ```txt
@@ -51,6 +52,9 @@ grep kqueue . -R|grep build
 会把 Go [编译时的本地绝对路径去掉]()，改成模块路径（或导入路径），以避免暴露构建环境并提升构建可重现性。
 
 ### 如何本地打镜像
+这个仓库没有给出如何完整的打包镜像的流水线, 根据[docker hub](https://hub.docker.com/layers/minio/minio/RELEASE.2025-09-07T16-13-09Z/images/sha256-a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2)   
+上的image layers, 可以知道用的Dockerfile是[Dockerfile.release](Dockerfile.release), 现在没有minio的二进制可下载, 需要用docker-buildx.sh打包二进制, 同时需要修改Dockerfile.release   
+在新的项目里打包: build-minio-image
 - docker-buildx.sh
 - Dockerfile.release
 
@@ -66,3 +70,6 @@ https://github.com/usernameisnull/minio/blob/d45c375dabea34b1b2734a79880e1e02f41
 ```txt
 github.com/minio/console v1.7.7-0.20250905210349-2017f33b26e1
 ```
+
+## TODO
+每次minio的仓库有新的tag,github自动打包

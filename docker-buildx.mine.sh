@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-set -euxo pipefail
+set -eux
 
 function _init() {
 	## 参数：release tag 名称
@@ -46,11 +46,11 @@ function _build() {
 	export GOARCH=$arch
 	export MINIO_RELEASE=RELEASE
 	LDFLAGS=$(go run buildscripts/gen-ldflags.go)
-	go build -tags kqueue -trimpath --ldflags "${LDFLAGS}" -o ./minio-${arch}.${release}
+	go build -tags kqueue -trimpath --ldflags "${LDFLAGS}" -o ./minio-${os}-${arch}
 }
 
 function main() {
-	echo "Testing builds for OS/Arch: ${SUPPORTED_OSARCH}"
+	echo "Build for OS/Arch: ${SUPPORTED_OSARCH}"
 	for each_osarch in ${SUPPORTED_OSARCH}; do
 		_build "${each_osarch}"
 	done
